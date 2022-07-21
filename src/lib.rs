@@ -22,7 +22,7 @@ pub enum Environment {
         serialize = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
     )]
     Sandbox,
-    ///! Live app Environment
+    ///! Production app Environment
     #[strum(
         serialize = "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
     )]
@@ -56,6 +56,7 @@ impl Mpesa {
     }
     ///! Returns a token to be used to authenticate a safaricomapp
     ///!Sandbox app or Production app
+    //TODO: Set Headers for authentication
     pub async fn get_access_token(&self) -> Result<(), Box<dyn std::error::Error>> {
         let https = HttpsConnector::new();
         let client = Client::builder().build::<_, hyper::Body>(https);
