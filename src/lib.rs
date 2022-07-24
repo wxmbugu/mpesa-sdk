@@ -1,20 +1,20 @@
-use hyper::{body::HttpBody, Client};
-use hyper_tls::HttpsConnector;
+//use hyper::header;
+//use hyper::Client;
+//use hyper::Request;
+//use hyper_tls::HttpsConnector;
+//use std::io::{stdout, Write};
+extern crate serde;
+use serde::Deserialize;
 use std::string::ToString;
-use std::{
-    io::{stdout, Write},
-    str::FromStr,
-    //string,
-};
 use strum_macros::Display;
-///! Mpesa to make mpesa transcations
+/// Mpesa to make mpesa transcations
 #[derive(Debug)]
 pub struct Mpesa {
     consumerkey: String,
     consumersecret: String,
     production_env: Environment,
 }
-///!  Production Environment
+///  Production Environment
 #[derive(Debug, Display)]
 pub enum Environment {
     ///!Sandbox app Environment
@@ -29,24 +29,14 @@ pub enum Environment {
     Production,
 }
 
-// const SANDBOXBASEURL: &str =
-//     "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
+#[derive(Deserialize, Debug)]
+struct AccessResponse {
+    expires_in: String,
+    access_token: String,
+}
 
-// const PRODUCTIONBASEURL: &str =
-//     "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
-// impl FromStr for Environment {
-//     type Err = ();
-
-//     fn from_str(s: &str) -> Result<Environment, ()> {
-//         match s {
-//             SANDBOXBASEURL => Ok(Environment::Sandbox),
-//             PRODUCTIONBASEURL => Ok(Environment::Production),
-//             _ => Err(()),
-//         }
-//     }
-// }
 impl Mpesa {
-    ///! Creates an Mpesa app either sandbox or live app
+    ///! Creates an Mpesa app can be either on a sandbox or prodcution Environment
     pub fn new(key: String, secret: String, env: Environment) -> Mpesa {
         Mpesa {
             consumerkey: key,
@@ -54,20 +44,22 @@ impl Mpesa {
             production_env: env,
         }
     }
-    ///! Returns a token to be used to authenticate a safaricomapp
-    ///!Sandbox app or Production app
-    //TODO: Set Headers for authentication
+    /// Returns a token to be used to authenticate a safaricomapp
+    /// Sandbox app or Production app
+    /// Sets a basic_auth to get access_token
     pub async fn get_access_token(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let https = HttpsConnector::new();
-        let client = Client::builder().build::<_, hyper::Body>(https);
-        let uri = self.production_env.to_string().parse()?;
-        let mut resp = client.get(uri).await?;
-        println!("Response: {}", resp.status());
-
-        while let Some(chunk) = resp.body_mut().data().await {
-            stdout().write_all(&chunk?)?;
-        }
-
+        let client = reqwest::Client::new();
+        let resp = client
+            .get(self.production_env.to_string())
+            .basic_auth(&self.consumerkey, Some(&self.consumersecret))
+            .send()
+            .await?;
+        //.basic_auth(&self.consumerkey, Some(&self.consumersecret))
+        //.await?;
+        //print!("{:?}", resp);
+        println!("{:#?}", resp);
+        let resp_json = resp.json::<AccessResponse>().await;
+        println!("{:#?}", resp_json);
         Ok(())
         //resp.
     }

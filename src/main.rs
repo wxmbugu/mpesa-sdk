@@ -5,7 +5,7 @@ use mpesa_sdk::{Environment, Mpesa};
 async fn main() -> Result<(), Box<dyn Error>> {
     let mpesa = Mpesa::new(
         "2tvPTwLLKkrLzm9L9EFDkf4ezCk7nEY1".to_string(),
-        " RBXlqhiDlUYlKqOp".to_string(),
+        "RBXlqhiDlUYlKqOp".to_string(),
         Environment::Sandbox,
     );
 
