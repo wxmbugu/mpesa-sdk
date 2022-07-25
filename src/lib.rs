@@ -4,9 +4,13 @@
 //use hyper_tls::HttpsConnector;
 //use std::io::{stdout, Write};
 extern crate serde;
+//use reqwest::StatusCode;
+//use reqwest::StatusCode;
 use serde::Deserialize;
+//use tokio::sync::mpsc::error;
 use std::string::ToString;
 use strum_macros::Display;
+use thiserror::Error;
 /// Mpesa to make mpesa transcations
 #[derive(Debug)]
 pub struct Mpesa {
@@ -18,21 +22,24 @@ pub struct Mpesa {
 #[derive(Debug, Display)]
 pub enum Environment {
     ///!Sandbox app Environment
-    #[strum(
-        serialize = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    )]
+    #[strum(serialize = "https://sandbox.safaricom.co.ke")]
     Sandbox,
     ///! Production app Environment
-    #[strum(
-        serialize = "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    )]
+    #[strum(serialize = "https://api.safaricom.co.ke")]
     Production,
 }
 
+#[derive(Error, Debug)]
+pub enum MpesaErrors {
+    #[error("Invaid authentication")]
+    BadCredentials,
+}
+
+///Mpesa access_token response
 #[derive(Deserialize, Debug)]
-struct AccessResponse {
-    expires_in: String,
-    access_token: String,
+pub struct AccessTokenResponse {
+    pub expires_in: String,
+    pub access_token: String,
 }
 
 impl Mpesa {
@@ -44,23 +51,24 @@ impl Mpesa {
             production_env: env,
         }
     }
-    /// Returns a token to be used to authenticate a safaricomapp
+    /// Returns a token to be used to authenticate a safaricom app
     /// Sandbox app or Production app
     /// Sets a basic_auth to get access_token
-    pub async fn get_access_token(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn get_access_token(
+        &self,
+    ) -> Result<AccessTokenResponse, Box<dyn std::error::Error>> {
         let client = reqwest::Client::new();
         let resp = client
-            .get(self.production_env.to_string())
+            .get(format!(
+                "{}/oauth/v1/generate?grant_type=client_credentials",
+                self.production_env.to_string()
+            ))
             .basic_auth(&self.consumerkey, Some(&self.consumersecret))
             .send()
             .await?;
-        //.basic_auth(&self.consumerkey, Some(&self.consumersecret))
-        //.await?;
-        //print!("{:?}", resp);
-        println!("{:#?}", resp);
-        let resp_json = resp.json::<AccessResponse>().await;
-        println!("{:#?}", resp_json);
-        Ok(())
-        //resp.
+        match resp.status().as_str() {
+            "200" => return Ok(resp.json::<AccessTokenResponse>().await?),
+            _ => return Err(Box::new(MpesaErrors::BadCredentials)),
+        }
     }
 }

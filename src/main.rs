@@ -10,6 +10,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
 
     //let rt = tokio::runtime::Runtime::new().unwrap();
-    mpesa.get_access_token().await?;
+    let ok = mpesa.get_access_token().await?;
+    println!("{:?}", ok);
     Ok(())
 }
