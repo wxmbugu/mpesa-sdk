@@ -1,6 +1,7 @@
 # RUST MPESA SDK
 
 ### Todo-list
+- [X] Accesstoken
 - [ ] C2B (client to business)
 - [ ] C2Bv2
 - [ ] B2C (business to client)
