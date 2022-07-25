@@ -1,6 +1,6 @@
-use std::error::Error;
-
 use mpesa_sdk::{Environment, Mpesa};
+mod services;
+use std::error::Error;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let mpesa = Mpesa::new(
@@ -12,5 +12,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //let rt = tokio::runtime::Runtime::new().unwrap();
     let ok = mpesa.get_access_token().await?;
     println!("{:?}", ok);
+
     Ok(())
 }

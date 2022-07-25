@@ -6,9 +6,9 @@
 extern crate serde;
 //use reqwest::StatusCode;
 //use reqwest::StatusCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 //use tokio::sync::mpsc::error;
-use std::string::ToString;
+use std::{error::Error, string::ToString};
 use strum_macros::Display;
 use thiserror::Error;
 /// Mpesa to make mpesa transcations
@@ -19,7 +19,7 @@ pub struct Mpesa {
     production_env: Environment,
 }
 ///  Production Environment
-#[derive(Debug, Display)]
+#[derive(Debug, Serialize, Display)]
 pub enum Environment {
     ///!Sandbox app Environment
     #[strum(serialize = "https://sandbox.safaricom.co.ke")]
@@ -37,7 +37,7 @@ pub enum MpesaErrors {
 
 ///Mpesa access_token response
 #[derive(Deserialize, Debug)]
-pub struct AccessTokenResponse {
+pub struct AccessToken {
     pub expires_in: String,
     pub access_token: String,
 }
@@ -54,9 +54,7 @@ impl Mpesa {
     /// Returns a token to be used to authenticate a safaricom app
     /// Sandbox app or Production app
     /// Sets a basic_auth to get access_token
-    pub async fn get_access_token(
-        &self,
-    ) -> Result<AccessTokenResponse, Box<dyn std::error::Error>> {
+    pub async fn get_access_token(&self) -> Result<AccessToken, Box<dyn std::error::Error>> {
         let client = reqwest::Client::new();
         let resp = client
             .get(format!(
@@ -67,8 +65,47 @@ impl Mpesa {
             .send()
             .await?;
         match resp.status().as_str() {
-            "200" => return Ok(resp.json::<AccessTokenResponse>().await?),
+            "200" => return Ok(resp.json::<AccessToken>().await?),
             _ => return Err(Box::new(MpesaErrors::BadCredentials)),
         }
     }
+}
+// pub struct Data<T: Serialize, U: for<'a> Deserialize<'a>> {
+//     requestdata: T,
+//     responsedata: U,
+//     access_token: String,
+//     env: Environment,
+// }
+
+// impl<T: Serialize, U: for<'a> Deserialize<'a>> Data<T, U> {
+//     pub fn new(
+//         requestdata: T,
+//         responsedata: U,
+//         access_token: String,
+//         env: Environment,
+//     ) -> Data<T, U> {
+//         Data {
+//             requestdata,
+//             responsedata,
+//             access_token,
+//             env,
+//         }
+//     }
+//     pub async fn postrequest(&self) -> Result<(), Box<dyn Error>> {
+//         let client = reqwest::Client::new();
+//         let resp = client
+//             .post(format!(
+//                 "{}/oauth/v1/generate?grant_type=client_credentials",
+//                 self.env.to_string()
+//             ))
+//             .json(&self.requestdata)
+//             .send()
+//             .await?;
+
+//         Ok(())
+//     }
+// }
+
+pub trait Transcations<T> {
+    fn send(&self) -> Option<T>;
 }
