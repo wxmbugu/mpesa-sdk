@@ -2,7 +2,7 @@
 
 ### Todo-list
 - [X] Accesstoken
-- [ ] C2B (client to business)
+- [X] C2B (client to business)
 - [ ] C2Bv2
 - [ ] B2C (business to client)
 - [ ] B2b (business to business)

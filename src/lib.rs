@@ -1,14 +1,7 @@
-//use hyper::header;
-//use hyper::Client;
-//use hyper::Request;
-//use hyper_tls::HttpsConnector;
-//use std::io::{stdout, Write};
 extern crate serde;
-//use reqwest::StatusCode;
-//use reqwest::StatusCode;
+use std::error::Error;
+
 use serde::{Deserialize, Serialize};
-//use tokio::sync::mpsc::error;
-use std::{error::Error, string::ToString};
 use strum_macros::Display;
 use thiserror::Error;
 /// Mpesa to make mpesa transcations
@@ -16,7 +9,7 @@ use thiserror::Error;
 pub struct Mpesa {
     consumerkey: String,
     consumersecret: String,
-    production_env: Environment,
+    pub production_env: Environment,
 }
 ///  Production Environment
 #[derive(Debug, Serialize, Display)]
@@ -54,19 +47,21 @@ impl Mpesa {
     /// Returns a token to be used to authenticate a safaricom app
     /// Sandbox app or Production app
     /// Sets a basic_auth to get access_token
-    pub async fn get_access_token(&self) -> Result<AccessToken, Box<dyn std::error::Error>> {
+    pub async fn get_access_token(&self) -> Result<AccessToken, Box<dyn Error>> {
         let client = reqwest::Client::new();
         let resp = client
             .get(format!(
                 "{}/oauth/v1/generate?grant_type=client_credentials",
-                self.production_env.to_string()
+                self.production_env
             ))
             .basic_auth(&self.consumerkey, Some(&self.consumersecret))
             .send()
             .await?;
+        //println!("{:?}", resp);
+
         match resp.status().as_str() {
             "200" => return Ok(resp.json::<AccessToken>().await?),
-            _ => return Err(Box::new(MpesaErrors::BadCredentials)),
+            _ => Err(Box::new(MpesaErrors::BadCredentials)),
         }
     }
 }
@@ -76,22 +71,13 @@ impl Mpesa {
 //     access_token: String,
 //     env: Environment,
 // }
-
-// impl<T: Serialize, U: for<'a> Deserialize<'a>> Data<T, U> {
-//     pub fn new(
-//         requestdata: T,
-//         responsedata: U,
-//         access_token: String,
-//         env: Environment,
-//     ) -> Data<T, U> {
-//         Data {
-//             requestdata,
-//             responsedata,
-//             access_token,
-//             env,
-//         }
+//             .json(&self.requestdata)
+//             .send()
+//             .await?;
+//         println!("{:#?}", resp);
+//         Ok(())
 //     }
-//     pub async fn postrequest(&self) -> Result<(), Box<dyn Error>> {
+//     pub async fn getrequest(&self) -> Result<(), Box<dyn Error>> {
 //         let client = reqwest::Client::new();
 //         let resp = client
 //             .post(format!(
@@ -101,11 +87,26 @@ impl Mpesa {
 //             .json(&self.requestdata)
 //             .send()
 //             .await?;
-
+//         println!("{:#?}", resp);
 //         Ok(())
 //     }
 // }
 
-pub trait Transcations<T> {
-    fn send(&self) -> Option<T>;
-}
+//pub trait Transcations<T> {
+//    fn send(&self) -> Option<T>;
+//}
+// #[derive(Serialize)]
+// pub struct Data<T>;
+// pub async fn postrequest(uri: String, data: Data<T>) -> Result<(), Box<dyn Error>> {
+//     let client = reqwest::Client::new();
+//     let resp = client
+//         .post(format!(
+//             "{}/oauth/v1/generate?grant_type=client_credentials",
+//             uri
+//         ))
+//         .json(&data)
+//         .send()
+//         .await?;
+//     println!("{:#?}", resp);
+//     Ok(())
+// }
