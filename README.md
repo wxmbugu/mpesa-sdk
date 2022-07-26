@@ -1,6 +1,6 @@
 # RUST MPESA SDK
-
-### Todo-list
+ Rust Mpesa sdk is a wrapper for mpesa api transactions
+### Road Map
 - [X] Accesstoken
 - [X] C2B (client to business)
 - [ ] C2Bv2
@@ -11,3 +11,7 @@
 - [ ] Lipa na Mpesa
 - [ ] Dynamic Mpesa QR API
 - [ ] Bill Manager Generic API
+
+### Features
+- Async
+
