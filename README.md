@@ -11,6 +11,7 @@
 - [ ] Lipa na Mpesa
 - [ ] Dynamic Mpesa QR API
 - [ ] Bill Manager Generic API
+- [ ] Tests
 
 ### Features
 - Async
