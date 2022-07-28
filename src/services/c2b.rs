@@ -26,7 +26,7 @@ pub struct C2BBuild {
 }
 
 #[derive(serde::Serialize, Debug)]
-pub struct C2B {
+struct C2B {
     ///THis is a unique identifier of the transcactiontype:There are two types of
     ///these identifiers:CustomerPayBillOnlin:This is used for Pay Bills shortcode.CustomerBuyGoodsOnline.
     /// This is used for buy goods short code
@@ -73,6 +73,7 @@ impl C2BBuild {
             env,
         }
     }
+    //TODO: Set an enum type for CommandID
     ///  Sets CommandID either : CustomerPayBillOnline or CustomerBuyGoodsOnline
     /// This is a unique identifier of the transaction type: There are two types of these Identifiers:CustomerPayBillOnline: This is used for Pay Bills
     ///shortcodes.CustomerBuyGoodsOnline: This is used for Buy Goods shortcodes.
@@ -120,7 +121,7 @@ impl C2BBuild {
         let resp = client
             .post(format!(
                 "{}/mpesa/c2b/v1/simulate",
-                self.env.as_ref().unwrap().to_string()
+                self.env.as_ref().unwrap()
             ))
             .bearer_auth(self.token.as_ref().unwrap().to_string())
             .json(&c2b)

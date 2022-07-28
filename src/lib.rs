@@ -71,6 +71,14 @@ impl Mpesa {
 //     access_token: String,
 //     env: Environment,
 // }
+// impl<T: Serialize, U: for<'a> Deserialize<'a>> Data<T, U> {
+//     pub async fn postrequest(&self) -> Result<(), Box<dyn Error>> {
+//         let client = reqwest::Client::new();
+//         let resp = client
+//             .get(format!(
+//                 "{}/oauth/v1/generate?grant_type=client_credentials",
+//                 self.env.to_string()
+//             ))
 //             .json(&self.requestdata)
 //             .send()
 //             .await?;

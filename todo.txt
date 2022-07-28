@@ -1,0 +1,12 @@
+[todo/mpesa-sdk]
+1.Write tests.
+2.Publish to the crate.
+3.Write better docunentation.
+4.Error Handling.
+
+[todo/service]
+1.Implement an enum for response type.
+
+[todo/c2b]
+1.Set an enum type for CommandID.
+
