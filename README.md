@@ -12,6 +12,7 @@
 - [ ] Dynamic Mpesa QR API
 - [ ] Bill Manager Generic API
 - [ ] Tests
+- [ ] Publish Crate
 
 ### Features
 - Async

@@ -10,18 +10,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Environment::Sandbox,
     );
     //let rt = tokio::runtime::Runtime::new().unwrap();
+    let number: i64 = 254728519199;
+    let shortcode: i32 = 600992;
+    let amount: i32 = 1;
     let ok = mpesa.get_access_token().await?;
     println!("{:?}", ok.access_token);
-    let c2b = C2BBuild::new(
-        "CustomerBuyGoodsOnline".to_string(),
-        1,
-        254728519199,
-        "".to_string(),
-        "600247".to_string(),
-        ok.access_token,
-        mpesa.production_env.to_string(),
+    let mut c2b = C2BBuild::new(
+        Some(ok.access_token),
+        Some(mpesa.production_env.to_string()),
     );
-    let c2 = c2b.transact().await?;
-    println!("{:?}",c2);
+    let x = &mut c2b;
+    x.msisdn(number)
+        .commandid("CustomerBuyGoodsOnline".to_string())
+        /* .billrefnumber("billrefnumber".to_string()) */
+        .shortcode(shortcode)
+        .amount(amount)
+        .transact()
+        .await?;
+    // let c2 = c2b.transact().await?;
+    //println!("{:?}", c2b.await);
     Ok(())
 }

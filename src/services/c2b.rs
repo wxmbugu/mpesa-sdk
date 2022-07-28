@@ -9,20 +9,20 @@ pub struct C2BBuild {
     ///THis is a unique identifier of the transcactiontype:There are two types of
     ///these identifiers:CustomerPayBillOnlin:This is used for Pay Bills shortcode.CustomerBuyGoodsOnline.
     /// This is used for buy goods short code
-    commandid: String,
+    commandid: Option<String>,
     /// amount to be transcacted.The parameter is required
-    amount: i32,
+    amount: Option<i32>,
     /// This is the phone number initiating the C2B transaction.
-    msisdn: i64,
+    msisdn: Option<i64>,
     /// This is used on CustomerPayBillOnline option only.
     /// This is where a customer is expected to enter a unique bill identifier, e.g. an Account Number.
     billrefnumber: String,
     /// This is the Short Code receiving the amount being transacted.
-    shortcode: String,
+    shortcode: Option<i32>,
     /// AccessToken
-    token: String,
+    token: Option<String>,
     //env environment string
-    env: String,
+    env: Option<String>,
 }
 
 #[derive(serde::Serialize, Debug)]
@@ -44,7 +44,7 @@ pub struct C2B {
     billrefnumber: String,
     /// This is the Short Code receiving the amount being transacted.
     #[serde(rename = "ShortCode")]
-    shortcode: String,
+    shortcode: i32,
 }
 #[derive(serde::Deserialize, Debug)]
 pub struct C2Bresponse {
@@ -57,39 +57,72 @@ pub struct C2Bresponse {
 }
 impl C2BBuild {
     // add code here
-    pub fn new(
-        commandid: String,
-        amount: i32,
-        phonnumber: i64,
-        paybill: String,
-        shortcode: String,
-        token: String,
-        env: String,
-    ) -> C2BBuild {
+
+    //     commandid: String,
+    //     amount: i32,
+    //     phonnumber: i64,
+    //     paybill: String
+    pub fn new(token: Option<String>, env: Option<String>) -> C2BBuild {
         C2BBuild {
-            commandid,
-            amount,
-            msisdn: phonnumber,
-            billrefnumber: paybill,
-            shortcode,
+            commandid: None,
+            amount: None,
+            msisdn: None,
+            billrefnumber: "".to_string(),
+            shortcode: None,
             token,
             env,
         }
     }
+    ///  Sets CommandID either : CustomerPayBillOnline or CustomerBuyGoodsOnline
+    /// This is a unique identifier of the transaction type: There are two types of these Identifiers:CustomerPayBillOnline: This is used for Pay Bills
+    ///shortcodes.CustomerBuyGoodsOnline: This is used for Buy Goods shortcodes.
+    pub fn commandid(&mut self, commandid: String) -> &mut Self {
+        self.commandid = Some(commandid);
+        self
+    }
+    /// BillRefNumber: This is used on CustomerPayBillOnline option only.
+    /// This is where a customer is expected to enter a unique bill identifier, e.g an Account Number.
+    pub fn billrefnumber(&mut self, billrefnumber: String) -> &mut Self {
+        self.billrefnumber = billrefnumber;
+        self
+    }
+    /// Sets the phone number initiating the C2B transaction.
+    pub fn msisdn(&mut self, msisdn: i64) -> &mut Self {
+        self.msisdn = Some(msisdn);
+        self
+    }
+    /// Sets the amount being transacted.
+    pub fn amount(&mut self, amount: i32) -> &mut Self {
+        self.amount = Some(amount);
+        self
+    }
+    /// Sets the  Short Code receiving the amount being transacted.
+    pub fn shortcode(&mut self, shortcode: i32) -> &mut Self {
+        self.shortcode = Some(shortcode);
+        self
+    }
 
-    pub async fn transact(self) -> Result<C2Bresponse, Box<dyn Error>> {
+    pub async fn transact(&self) -> Result<C2Bresponse, Box<dyn Error>> {
         let client = reqwest::Client::new();
+
         let c2b = C2B {
-            commandid: self.commandid,
-            amount: self.amount,
-            msisdn: self.msisdn,
-            billrefnumber: self.billrefnumber,
-            shortcode: self.shortcode,
+            commandid: self
+                .commandid
+                .as_ref()
+                .ok_or("CommandID Required")?
+                .to_string(),
+            amount: self.amount.ok_or("Ammount Required")?,
+            msisdn: self.msisdn.ok_or("Contact Required")?,
+            billrefnumber: self.billrefnumber.to_string(),
+            shortcode: self.shortcode.ok_or("Shortcode Required")?,
         };
 
         let resp = client
-            .post(format!("{}/mpesa/c2b/v1/simulate", self.env))
-            .bearer_auth(self.token)
+            .post(format!(
+                "{}/mpesa/c2b/v1/simulate",
+                self.env.as_ref().unwrap().to_string()
+            ))
+            .bearer_auth(self.token.as_ref().unwrap().to_string())
             .json(&c2b)
             .send()
             .await?;
