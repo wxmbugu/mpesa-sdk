@@ -1,8 +1,6 @@
 use std::error::Error;
 
-use mpesa_sdk::MpesaErrors;
-//use crate::MpesaErrors;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 // TDOD:Implement an enum for response type
 pub struct RegisterUrlsBuilder {
@@ -44,15 +42,6 @@ struct RegisterUrls {
     #[serde(rename = "ValidationURL")]
     validationurl: String,
 }
-#[derive(serde::Deserialize, Debug)]
-pub struct Registerurlrespone {
-    #[serde(rename(deserialize = "ResponseCode"))]
-    pub responsecode: String,
-    #[serde(rename = "OriginatorCoversationID")]
-    pub originatorconversationid: String,
-    #[serde(rename = "ResponseDescription")]
-    pub responsedescription: String,
-}
 
 impl RegisterUrlsBuilder {
     pub fn new(token: Option<String>, env: Option<String>) -> RegisterUrlsBuilder {
@@ -90,7 +79,7 @@ impl RegisterUrlsBuilder {
         self.confirmationurl = Some(confirmationurl);
         self
     }
-    pub async fn register(&self) -> Result<Registerurlrespone, Box<dyn Error>> {
+    pub async fn register(&self) -> Result<(), Box<dyn Error>> {
         let client = reqwest::Client::new();
 
         let registerurl = RegisterUrls {
@@ -112,7 +101,7 @@ impl RegisterUrlsBuilder {
                 .to_string(),
         };
 
-        let resp = client
+        let mut resp = client
             .post(format!(
                 "{}/mpesa/c2b/v1/registerurl",
                 self.env.as_ref().unwrap()
@@ -121,12 +110,10 @@ impl RegisterUrlsBuilder {
             .json(&registerurl)
             .send()
             .await?;
-        // while let Some(chunk) = resp.chunk().await? {
-        //     println!("{:#?}", chunk);
-        // }
-        match resp.status().as_str() {
-            "200" => return Ok(resp.json::<Registerurlrespone>().await?),
-            _ => Err(Box::new(MpesaErrors::BadCredentials)),
+        while let Some(chunk) = resp.chunk().await? {
+            println!("{:#?}", chunk);
         }
+        //println!("{:#?}", resp);
+        Ok(())
     }
 }

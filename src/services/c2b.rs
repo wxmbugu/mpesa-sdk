@@ -1,6 +1,8 @@
 use std::error::Error;
 
 use mpesa_sdk::MpesaErrors;
+
+//use crate::MpesaErrors;
 //use serde::Deserialize;
 
 ///Customer to business make payment request from Client to Business
@@ -102,7 +104,7 @@ impl C2BBuild {
         self.shortcode = Some(shortcode);
         self
     }
-
+    /// V1:C2B-> Make payment requests from Client to Business (C2B). Simulate is available on sandbox only
     pub async fn transact(&self) -> Result<C2Bresponse, Box<dyn Error>> {
         let client = reqwest::Client::new();
 
@@ -127,7 +129,38 @@ impl C2BBuild {
             .json(&c2b)
             .send()
             .await?;
-        println!("{:#?}", resp);
+        //println!("{:#?}", resp);
+        match resp.status().as_str() {
+            "200" => return Ok(resp.json::<C2Bresponse>().await?),
+            _ => Err(Box::new(MpesaErrors::BadCredentials)),
+        }
+    }
+    /// V2:C2B-> Make payment requests from Client to Business (C2B). Simulate is available on sandbox only
+    pub async fn transactv2(&self) -> Result<C2Bresponse, Box<dyn Error>> {
+        let client = reqwest::Client::new();
+
+        let c2b = C2B {
+            commandid: self
+                .commandid
+                .as_ref()
+                .ok_or("CommandID Required")?
+                .to_string(),
+            amount: self.amount.ok_or("Ammount Required")?,
+            msisdn: self.msisdn.ok_or("Contact Required")?,
+            billrefnumber: self.billrefnumber.to_string(),
+            shortcode: self.shortcode.ok_or("Shortcode Required")?,
+        };
+
+        let resp = client
+            .post(format!(
+                "{}/mpesa/c2b/v2/simulate",
+                self.env.as_ref().unwrap()
+            ))
+            .bearer_auth(self.token.as_ref().unwrap().to_string())
+            .json(&c2b)
+            .send()
+            .await?;
+        //println!("{:#?}", resp);
         match resp.status().as_str() {
             "200" => return Ok(resp.json::<C2Bresponse>().await?),
             _ => Err(Box::new(MpesaErrors::BadCredentials)),
