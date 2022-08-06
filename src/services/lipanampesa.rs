@@ -1,14 +1,14 @@
 extern crate base64;
 
 use base64::encode;
+use reqwest::Client;
 use std::error::Error;
 
-//use crate::{AccessToken, Mpesa};
 use chrono::prelude::*;
-//use mpesa_sdk::Mpesa;
 
 use serde::Serialize;
-//use crate::{AccessToken, Mpesa};
+
+use crate::client::MpesaClient;
 ///LIPA NA M-PESA ONLINE API also know as M-PESA express (STK Push) is a Merchant/Business initiated C2B (Customer to Business) Payment.
 pub struct LipanaMpesaBuilder {
     ///This is organizations shortcode (Paybill or Buygoods
@@ -45,6 +45,7 @@ pub struct LipanaMpesaBuilder {
     transactiondesc: Option<String>,
     production_env: String,
     accesstoken: String,
+    client: Client,
 }
 #[derive(Serialize)]
 ///LIPA NA M-PESA ONLINE API also know as M-PESA express (STK Push) is a Merchant/Business initiated C2B (Customer to Business) Payment.
@@ -83,7 +84,7 @@ struct LipanaMpesa {
     pub transactiondesc: String,
 }
 impl LipanaMpesaBuilder {
-    pub fn new(production_env: String, accesstoken: String) -> LipanaMpesaBuilder {
+    pub fn new(client: MpesaClient) -> LipanaMpesaBuilder {
         LipanaMpesaBuilder {
             business_short_code: None,
             password: None,
@@ -96,8 +97,9 @@ impl LipanaMpesaBuilder {
             callbackurl: None,
             accountreference: None,
             transactiondesc: None,
-            production_env,
-            accesstoken,
+            production_env: client.env,
+            accesstoken: client.access_token,
+            client: client.client,
         }
     }
     pub fn businessshortcode(&mut self, business_short_code: i32) -> &mut Self {
@@ -146,7 +148,6 @@ impl LipanaMpesaBuilder {
     }
 
     pub async fn stkpush(&mut self) -> Result<(), Box<dyn Error>> {
-        let client = reqwest::Client::new();
         let lipanampesa = LipanaMpesa {
             business_short_code: self.business_short_code.unwrap(),
             password: self.password.as_ref().ok_or("password error")?.to_string(),
@@ -172,7 +173,8 @@ impl LipanaMpesaBuilder {
                 .to_string(),
             transactiondesc: self.transactiondesc.as_ref().unwrap().to_string(),
         };
-        let mut resp = client
+        let mut resp = self
+            .client
             .post(format!(
                 "{}/mpesa/stkpush/v1/processrequest",
                 self.production_env

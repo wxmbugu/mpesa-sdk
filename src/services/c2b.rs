@@ -1,9 +1,6 @@
 use std::error::Error;
 
-use mpesa_sdk::MpesaErrors;
-
-//use crate::MpesaErrors;
-//use serde::Deserialize;
+use crate::client::{MpesaClient, MpesaErrors::BadCredentials};
 
 ///Customer to business make payment request from Client to Business
 ///Make payment requests from Client to Business (C2B)
@@ -64,15 +61,15 @@ impl C2BBuild {
     //     amount: i32,
     //     phonnumber: i64,
     //     paybill: String
-    pub fn new(token: Option<String>, env: Option<String>) -> C2BBuild {
+    pub fn new(client: MpesaClient) -> C2BBuild {
         C2BBuild {
             commandid: None,
             amount: None,
             msisdn: None,
             billrefnumber: "".to_string(),
             shortcode: None,
-            token,
-            env,
+            token: Some(client.access_token),
+            env: Some(client.env),
         }
     }
     //TODO: Set an enum type for CommandID
@@ -119,7 +116,6 @@ impl C2BBuild {
             billrefnumber: self.billrefnumber.to_string(),
             shortcode: self.shortcode.ok_or("Shortcode Required")?,
         };
-
         let resp = client
             .post(format!(
                 "{}/mpesa/c2b/v1/simulate",
@@ -132,7 +128,7 @@ impl C2BBuild {
         //println!("{:#?}", resp);
         match resp.status().as_str() {
             "200" => return Ok(resp.json::<C2Bresponse>().await?),
-            _ => Err(Box::new(MpesaErrors::BadCredentials)),
+            _ => Err(Box::new(BadCredentials)),
         }
     }
     /// V2:C2B-> Make payment requests from Client to Business (C2B). Simulate is available on sandbox only
@@ -163,7 +159,7 @@ impl C2BBuild {
         //println!("{:#?}", resp);
         match resp.status().as_str() {
             "200" => return Ok(resp.json::<C2Bresponse>().await?),
-            _ => Err(Box::new(MpesaErrors::BadCredentials)),
+            _ => Err(Box::new(BadCredentials)),
         }
     }
 }

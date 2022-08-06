@@ -5,7 +5,7 @@
 - [X] C2B (client to business)
 - [X] C2Bv2
 - [ ] B2C (business to client)
-- [ ] B2b (business to business)
+- [ ] B2B (business to business)
 - [ ] TransactionStatus
 - [X] C2B(Register Urls Api)
 - [X] Lipa na Mpesa

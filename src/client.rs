@@ -1,5 +1,6 @@
 extern crate serde;
 //use reqwest::Client;
+use reqwest::Client;
 use std::error::Error;
 //use services::lipanampesa;
 //use reqwest::Client;
@@ -33,9 +34,13 @@ pub enum MpesaErrors {
 
 ///Mpesa access_token response
 #[derive(Deserialize, Debug)]
-pub struct AccessToken {
-    pub expires_in: String,
-    pub access_token: String,
+pub struct MpesaClient {
+    expires_in: String,
+    pub(crate) access_token: String,
+    #[serde(skip_deserializing)]
+    pub(crate) env: String,
+    #[serde(skip_deserializing)]
+    pub(crate) client: Client,
 }
 
 impl Mpesa {
@@ -50,7 +55,7 @@ impl Mpesa {
     /// Returns a token to be used to authenticate a safaricom app
     /// Sandbox app or Production app
     /// Sets a basic_auth to get access_token
-    pub async fn get_access_token(self) -> Result<AccessToken, Box<dyn Error>> {
+    pub async fn get_access_token(self) -> Result<MpesaClient, Box<dyn Error>> {
         let client = reqwest::Client::new();
         let resp = client
             .get(format!(
@@ -62,13 +67,16 @@ impl Mpesa {
             .await?;
         // println!("{:#?}", resp);
         //self.access_token = Some(accesstoken.access_token);
-        match resp.status().as_str() {
-            "200" => Ok(resp.json::<AccessToken>().await?),
-            _ => Err(Box::new(MpesaErrors::BadCredentials)),
+        if resp.status().is_success() {
+            let mut accesstoken = resp.json::<MpesaClient>().await?;
+            accesstoken.env = self.production_env.to_string();
+            accesstoken.client = client;
+            Ok(accesstoken)
+        } else {
+            Err(Box::new(MpesaErrors::BadCredentials))
         }
     }
 }
-
 // pub struct Data<T: Serialize, U: for<'a> Deserialize<'a>> {
 //     requestdata: T,
 //     responsedata: U,

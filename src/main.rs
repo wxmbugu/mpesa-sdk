@@ -1,4 +1,5 @@
-use mpesa_sdk::{Environment, Mpesa};
+mod client;
+use crate::client::*;
 use services::{
     c2b::C2BBuild,
     lipanampesa::{self, LipanaMpesaBuilder},
@@ -15,6 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .get_access_token()
     .await?;
+    println!("{:?}", mpesa);
     // .get_access_token()
     // .await?;
     //let access_token = &mpesa.get_access_token().await?;
@@ -47,12 +49,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // .shortcode(600610)
     // .responsetype("Completed".to_string())
     // .confirmationurl("https://2f90-41-90-185-34.eu.ngrok.io".to_string())
-    // .validationurl("https://2f90-41-90-185-34.eu.ngrok.io".to_string())
+    // .valiionurl("https://2f90-41-90-185-34.eu.ngrok.io".to_string())
     // .register()
     // .await?;
     // println!("{:?} whaat", uris);
 
-    let lipanmpesa = LipanaMpesaBuilder::new(Environment::Sandbox.to_string(), mpesa.access_token)
+    let lipanmpesa = LipanaMpesaBuilder::new(mpesa)
         .phone_number(254728519199)
         .transcationtype("sm".to_string())
         .businessshortcode(123)
@@ -64,6 +66,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .party_a(254728519199)
         .party_b(2435)
         .stkpush()
-        .await?;
+        .await;
+    println!("{:?}", lipanmpesa);
     Ok(())
 }

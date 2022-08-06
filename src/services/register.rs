@@ -1,8 +1,7 @@
+use serde::Serialize;
 use std::error::Error;
 
-use mpesa_sdk::MpesaErrors;
-//use crate::MpesaErrors;
-use serde::Serialize;
+use crate::client::{MpesaClient, MpesaErrors};
 
 // TDOD:Implement an enum for response type
 pub struct RegisterUrlsBuilder {
@@ -55,14 +54,14 @@ pub struct Registerurlrespone {
 }
 
 impl RegisterUrlsBuilder {
-    pub fn new(token: Option<String>, env: Option<String>) -> RegisterUrlsBuilder {
+    pub fn new(client: MpesaClient) -> RegisterUrlsBuilder {
         RegisterUrlsBuilder {
             shortcode: None,
             responsetype: None,
             confirmationurl: None,
             validationurl: None,
-            token,
-            env,
+            token: Some(client.access_token),
+            env: Some(client.env),
         }
     }
     /// The shortcode of the organization
