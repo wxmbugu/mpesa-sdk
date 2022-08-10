@@ -15,6 +15,6 @@ async fn mpesa() {
     )
     .get_access_token()
     .await
-    .unwrap();
+    .expect("Error");
     assert_eq!("3599", mpesa.expires_in);
 }

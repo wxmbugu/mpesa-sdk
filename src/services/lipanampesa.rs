@@ -186,10 +186,10 @@ impl LipanaMpesaBuilder {
                 .as_ref()
                 .ok_or("transcactiontype required")?
                 .to_string(),
-            amount: self.amount.unwrap(),
-            party_a: self.party_a.unwrap(),
-            party_b: self.party_b.unwrap(),
-            phone_number: self.phone_number.unwrap(),
+            amount: self.amount.ok_or("amount required")?,
+            party_a: self.party_a.ok_or("party_a required")?,
+            party_b: self.party_b.ok_or("party_b required")?,
+            phone_number: self.phone_number.ok_or("phone_number required")?,
             callbackurl: self
                 .callbackurl
                 .as_ref()
@@ -200,7 +200,11 @@ impl LipanaMpesaBuilder {
                 .as_ref()
                 .ok_or("accountreference Reference required")?
                 .to_string(),
-            transactiondesc: self.transactiondesc.as_ref().unwrap().to_string(),
+            transactiondesc: self
+                .transactiondesc
+                .as_ref()
+                .ok_or("transaction description required")?
+                .to_string(),
         };
         let mut resp = self
             .mpesa
