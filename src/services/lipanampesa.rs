@@ -1,14 +1,13 @@
 extern crate base64;
 
 use base64::encode;
-use reqwest::Client;
 use std::error::Error;
 
 use chrono::prelude::*;
 
 use serde::Serialize;
 
-use crate::client::MpesaClient;
+use crate::{client::MpesaClient, MpesaErrors};
 ///LIPA NA M-PESA ONLINE API also know as M-PESA express (STK Push) is a Merchant/Business initiated C2B (Customer to Business) Payment.
 pub struct LipanaMpesaBuilder {
     ///This is organizations shortcode (Paybill or Buygoods
@@ -43,9 +42,8 @@ pub struct LipanaMpesaBuilder {
     accountreference: Option<String>,
     ///This is any additional information/comment that can be sent along with the request from your system. Maximum of 13 Characters.
     transactiondesc: Option<String>,
-    production_env: String,
-    accesstoken: String,
-    client: Client,
+    ///Receives MpesaClient to execute stk push actions
+    mpesa: MpesaClient,
 }
 #[derive(Serialize)]
 ///LIPA NA M-PESA ONLINE API also know as M-PESA express (STK Push) is a Merchant/Business initiated C2B (Customer to Business) Payment.
@@ -66,7 +64,7 @@ struct LipanaMpesa {
     ///This is the Amount transacted normally a numeric value. Money that customer pays to the Shorcode.
     ///Only whole numbers are supported.
     pub amount: i64,
-    ///The phone n:+umber sending money.
+    ///The phone number sending money.
     ///The parameter expected is a Valid Safaricom Mobile Number that is M-PESA registered in the format 2547XXXXXXXX
     pub party_a: i64,
     ///The organization receiving the funds. The parameter expected is a 5 to 6 digit as defined on the Shortcode description above.
@@ -83,7 +81,21 @@ struct LipanaMpesa {
     ///This is any additional information/comment that can be sent along with the request from your system. Maximum of 13 Characters.
     pub transactiondesc: String,
 }
+#[derive(serde::Deserialize, Debug)]
+pub struct LipanaMpesaResponse {
+    #[serde(rename = "MerchantRequestID")]
+    pub merchantrequestid: String,
+    #[serde(rename = "CheckoutRequestID")]
+    pub checkoutrequesid: String,
+    #[serde(rename(deserialize = "ResponseCode"))]
+    pub responsecode: String,
+    #[serde(rename = "ResponseDescription")]
+    pub responsedescription: String,
+    #[serde(rename = "CustomerMessage")]
+    pub customermessage: String,
+}
 impl LipanaMpesaBuilder {
+    ///initiates the LipanaMpesaBuilder
     pub fn new(client: MpesaClient) -> LipanaMpesaBuilder {
         LipanaMpesaBuilder {
             business_short_code: None,
@@ -97,15 +109,16 @@ impl LipanaMpesaBuilder {
             callbackurl: None,
             accountreference: None,
             transactiondesc: None,
-            production_env: client.env,
-            accesstoken: client.access_token,
-            client: client.client,
+            mpesa: client,
         }
     }
+    ///This is organizations shortcode (Paybill or Buygoods
+    ///- A 5 to 6 digit account number) used to identify an organization and receive the transaction.
     pub fn businessshortcode(&mut self, business_short_code: i32) -> &mut Self {
         self.business_short_code = Some(business_short_code);
         self
     }
+    ///This is the password used for encrypting the request sent:
     pub fn password(&mut self, password: String) -> &mut Self {
         self.password = Some(encode(
             self.business_short_code.unwrap().to_string()
@@ -114,40 +127,56 @@ impl LipanaMpesaBuilder {
         ));
         self
     }
+    ///The transaction type for M-PESA Express is "CustomerPayBillOnline" for PayBill Numbers and "CustomerBuyGoodsOnline"   
     pub fn transcationtype(&mut self, transcationtype: String) -> &mut Self {
         self.transcactiontype = Some(transcationtype);
         self
     }
+    ///This is the Amount transacted normally a numeric value. Money that customer pays to the Shorcode.
     pub fn amount(&mut self, amount: i64) -> &mut Self {
         self.amount = Some(amount);
         self
     }
+    ///The phone number sending money.
+    ///The parameter expected is a Valid Safaricom Mobile Number that is M-PESA registered in the format 2547XXXXXXXX
+
     pub fn party_a(&mut self, phone_number: i64) -> &mut Self {
         self.party_a = Some(phone_number);
         self
     }
+    ///The organization receiving the funds. The parameter expected is a 5 to 6 digit
     pub fn party_b(&mut self, party_b: i32) -> &mut Self {
         self.party_b = Some(party_b);
         self
     }
+    ///The Mobile Number to receive the STK Pin Prompt. This number can be the same as PartyA valueT: above.
+
     pub fn phone_number(&mut self, phone_number: i64) -> &mut Self {
         self.phone_number = Some(phone_number);
         self
     }
+    ///A CallBack URL is a valid secure URL that is used to receive notifications from M-Pesa API.
+    ///It is the endpoint to which the results will be sent by M-Pesa API.
+
     pub fn callbackurl(&mut self, url: String) -> &mut Self {
         self.callbackurl = Some(url);
         self
     }
+    ///Account Reference: This is an Alpha-Numeric parameter that is defined by your system as an Identifier of the transaction for CustomerPayBillOnline transaction type.
+    //Along with the business name, this value is also displayed to the customer in the STK Pin Prompt message. Maximum of 12 characters.
+
     pub fn accountreference(&mut self, account_reference: String) -> &mut Self {
         self.accountreference = Some(account_reference);
         self
     }
+    ///This is any additional information/comment that can be sent along with the request from your system. Maximum of 13 Characters.
+
     pub fn transactiondesc(&mut self, description: String) -> &mut Self {
         self.transactiondesc = Some(description);
         self
     }
-
-    pub async fn stkpush(&mut self) -> Result<(), Box<dyn Error>> {
+    ///sets the API required parameters and sends the API REQUEST to Mpesa
+    pub async fn stkpush(&mut self) -> Result<LipanaMpesaResponse, Box<dyn Error>> {
         let lipanampesa = LipanaMpesa {
             business_short_code: self.business_short_code.unwrap(),
             password: self.password.as_ref().ok_or("password error")?.to_string(),
@@ -174,18 +203,22 @@ impl LipanaMpesaBuilder {
             transactiondesc: self.transactiondesc.as_ref().unwrap().to_string(),
         };
         let mut resp = self
+            .mpesa
             .client
             .post(format!(
                 "{}/mpesa/stkpush/v1/processrequest",
-                self.production_env
+                self.mpesa.env
             ))
-            .bearer_auth(self.accesstoken.to_string())
+            .bearer_auth(self.mpesa.access_token.to_string())
             .json(&lipanampesa)
             .send()
             .await?;
         while let Some(chunks) = resp.chunk().await? {
             println!("{:?}", &chunks)
         }
-        Ok(())
+        match resp.status().as_str() {
+            "200" => return Ok(resp.json::<LipanaMpesaResponse>().await?),
+            _ => Err(Box::new(MpesaErrors::BadCredentials)),
+        }
     }
 }

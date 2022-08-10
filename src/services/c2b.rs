@@ -18,10 +18,7 @@ pub struct C2BBuild {
     billrefnumber: String,
     /// This is the Short Code receiving the amount being transacted.
     shortcode: Option<i32>,
-    /// AccessToken
-    token: Option<String>,
-    //env environment string
-    env: Option<String>,
+    mpesa: MpesaClient,
 }
 
 #[derive(serde::Serialize, Debug)]
@@ -47,8 +44,8 @@ struct C2B {
 }
 #[derive(serde::Deserialize, Debug)]
 pub struct C2Bresponse {
-    #[serde(rename(deserialize = "ResponseCode"))]
-    pub responsecode: String,
+    #[serde(rename = "ConversationID", skip_serializing_if = "ConversationID")]
+    pub conversationid: String,
     #[serde(rename = "OriginatorCoversationID")]
     pub originatorconversationid: String,
     #[serde(rename = "ResponseDescription")]
@@ -68,8 +65,7 @@ impl C2BBuild {
             msisdn: None,
             billrefnumber: "".to_string(),
             shortcode: None,
-            token: Some(client.access_token),
-            env: Some(client.env),
+            mpesa: client,
         }
     }
     //TODO: Set an enum type for CommandID
@@ -103,8 +99,6 @@ impl C2BBuild {
     }
     /// V1:C2B-> Make payment requests from Client to Business (C2B). Simulate is available on sandbox only
     pub async fn transact(&self) -> Result<C2Bresponse, Box<dyn Error>> {
-        let client = reqwest::Client::new();
-
         let c2b = C2B {
             commandid: self
                 .commandid
@@ -116,12 +110,11 @@ impl C2BBuild {
             billrefnumber: self.billrefnumber.to_string(),
             shortcode: self.shortcode.ok_or("Shortcode Required")?,
         };
-        let resp = client
-            .post(format!(
-                "{}/mpesa/c2b/v1/simulate",
-                self.env.as_ref().unwrap()
-            ))
-            .bearer_auth(self.token.as_ref().unwrap().to_string())
+        let resp = self
+            .mpesa
+            .client
+            .post(format!("{}/mpesa/c2b/v1/simulate", self.mpesa.env))
+            .bearer_auth(self.mpesa.access_token.to_string())
             .json(&c2b)
             .send()
             .await?;
@@ -133,8 +126,6 @@ impl C2BBuild {
     }
     /// V2:C2B-> Make payment requests from Client to Business (C2B). Simulate is available on sandbox only
     pub async fn transactv2(&self) -> Result<C2Bresponse, Box<dyn Error>> {
-        let client = reqwest::Client::new();
-
         let c2b = C2B {
             commandid: self
                 .commandid
@@ -147,12 +138,11 @@ impl C2BBuild {
             shortcode: self.shortcode.ok_or("Shortcode Required")?,
         };
 
-        let resp = client
-            .post(format!(
-                "{}/mpesa/c2b/v2/simulate",
-                self.env.as_ref().unwrap()
-            ))
-            .bearer_auth(self.token.as_ref().unwrap().to_string())
+        let resp = self
+            .mpesa
+            .client
+            .post(format!("{}/mpesa/c2b/v2/simulate", self.mpesa.env))
+            .bearer_auth(self.mpesa.access_token.to_string())
             .json(&c2b)
             .send()
             .await?;

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 extern crate serde;
 //use reqwest::Client;
 use reqwest::Client;
@@ -32,10 +33,10 @@ pub enum MpesaErrors {
     BadCredentials,
 }
 
-///Mpesa access_token response
+///Mpesa Client receives th accesstoken response and production_env
 #[derive(Deserialize, Debug)]
 pub struct MpesaClient {
-    expires_in: String,
+    pub expires_in: String,
     pub(crate) access_token: String,
     #[serde(skip_deserializing)]
     pub(crate) env: String,
@@ -77,56 +78,3 @@ impl Mpesa {
         }
     }
 }
-// pub struct Data<T: Serialize, U: for<'a> Deserialize<'a>> {
-//     requestdata: T,
-//     responsedata: U,
-//     access_token: String,
-//     env: Environment,
-// }
-// impl<T: Serialize, U: for<'a> Deserialize<'a>> Data<T, U> {
-//     pub async fn postrequest(&self) -> Result<(), Box<dyn Error>> {
-//         let client = reqwest::Client::new();
-//         let resp = client
-//             .get(format!(
-//                 "{}/oauth/v1/generate?grant_type=client_credentials",
-//                 self.env.to_string()
-//             ))
-//             .json(&self.requestdata)
-//             .send()
-//             .await?;
-//         println!("{:#?}", resp);
-//         Ok(())
-//     }
-//     pub async fn getrequest(&self) -> Result<(), Box<dyn Error>> {
-//         let client = reqwest::Client::new();
-//         let resp = client
-//             .post(format!(
-//                 "{}/oauth/v1/generate?grant_type=client_credentials",
-//                 self.env.to_string()
-//             ))
-//             .json(&self.requestdata)
-//             .send()
-//             .await?;
-//         println!("{:#?}", resp);
-//         Ok(())
-//     }
-// }
-
-//pub trait Transcations<T> {
-//    fn send(&self) -> Option<T>;
-//}
-// #[derive(Serialize)]
-// pub struct Data<T>;
-// pub async fn postrequest(uri: String, data: Data<T>) -> Result<(), Box<dyn Error>> {
-//     let client = reqwest::Client::new();
-//     let resp = client
-//         .post(format!(
-//             "{}/oauth/v1/generate?grant_type=client_credentials",
-//             uri
-//         ))
-//         .json(&data)
-//         .send()
-//         .await?;
-//     println!("{:#?}", resp);
-//     Ok(())
-// }

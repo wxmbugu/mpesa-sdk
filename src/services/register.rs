@@ -17,10 +17,8 @@ pub struct RegisterUrlsBuilder {
     /// This is the URL that receives the validation request from API upon payment submission.
     /// The validation URL is only called if external validation on the registered shortcode is enabled. (By default external validation is disabled)
     validationurl: Option<String>,
-    /// AccessToken
-    token: Option<String>,
-    //env environment string
-    env: Option<String>,
+    //mpesa client to exectue registering urls
+    mpesa: MpesaClient,
 }
 
 /// Register validation and confirmation URLs on M-Pesa
@@ -60,8 +58,7 @@ impl RegisterUrlsBuilder {
             responsetype: None,
             confirmationurl: None,
             validationurl: None,
-            token: Some(client.access_token),
-            env: Some(client.env),
+            mpesa: client,
         }
     }
     /// The shortcode of the organization
@@ -90,8 +87,6 @@ impl RegisterUrlsBuilder {
         self
     }
     pub async fn register(&self) -> Result<Registerurlrespone, Box<dyn Error>> {
-        let client = reqwest::Client::new();
-
         let registerurl = RegisterUrls {
             shortcode: self.shortcode.ok_or("Short code required")?,
             responsetype: self
@@ -111,18 +106,14 @@ impl RegisterUrlsBuilder {
                 .to_string(),
         };
 
-        let resp = client
-            .post(format!(
-                "{}/mpesa/c2b/v1/registerurl",
-                self.env.as_ref().unwrap()
-            ))
-            .bearer_auth(self.token.as_ref().unwrap().to_string())
+        let resp = self
+            .mpesa
+            .client
+            .post(format!("{}/mpesa/c2b/v1/registerurl", self.mpesa.env))
+            .bearer_auth(self.mpesa.access_token.to_string())
             .json(&registerurl)
             .send()
             .await?;
-        // while let Some(chunk) = resp.chunk().await? {
-        //     println!("{:#?}", chunk);
-        // }
         match resp.status().as_str() {
             "200" => return Ok(resp.json::<Registerurlrespone>().await?),
             _ => Err(Box::new(MpesaErrors::BadCredentials)),
