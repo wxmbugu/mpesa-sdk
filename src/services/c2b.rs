@@ -1,6 +1,9 @@
 use std::error::Error;
 
-use crate::client::{MpesaClient, MpesaErrors::BadCredentials};
+use crate::{
+    client::{MpesaClient, MpesaErrors::BadCredentials},
+    CommandID,
+};
 
 ///Customer to business make payment request from Client to Business
 ///Make payment requests from Client to Business (C2B)
@@ -44,7 +47,7 @@ struct C2B {
 }
 #[derive(serde::Deserialize, Debug)]
 pub struct C2Bresponse {
-    #[serde(rename = "ConversationID", skip_serializing_if = "ConversationID")]
+    #[serde(rename = "ConversationID", default)]
     pub conversationid: String,
     #[serde(rename = "OriginatorCoversationID")]
     pub originatorconversationid: String,
@@ -68,12 +71,11 @@ impl C2BBuild {
             mpesa: client,
         }
     }
-    //TODO: Set an enum type for CommandID
     ///  Sets CommandID either : CustomerPayBillOnline or CustomerBuyGoodsOnline
     /// This is a unique identifier of the transaction type: There are two types of these Identifiers:CustomerPayBillOnline: This is used for Pay Bills
     ///shortcodes.CustomerBuyGoodsOnline: This is used for Buy Goods shortcodes.
-    pub fn commandid(&mut self, commandid: String) -> &mut Self {
-        self.commandid = Some(commandid);
+    pub fn commandid(&mut self, commandid: CommandID) -> &mut Self {
+        self.commandid = Some(commandid.to_string());
         self
     }
     /// BillRefNumber: This is used on CustomerPayBillOnline option only.

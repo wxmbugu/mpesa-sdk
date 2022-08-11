@@ -2,28 +2,25 @@
 extern crate serde;
 //use reqwest::Client;
 use reqwest::Client;
-use std::error::Error;
+use std::{error::Error, fmt::Display};
 //use services::lipanampesa;
 //use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use strum_macros::Display;
 use thiserror::Error;
 /// Mpesa to make mpesa transcations
 #[derive(Debug)]
 pub struct Mpesa {
-    pub consumerkey: String,
-    pub consumersecret: String,
+    consumerkey: String,
+    consumersecret: String,
     /*  pub client: Client, */
-    pub production_env: Environment,
+    production_env: String,
 }
 ///  Production Environment
-#[derive(Debug, Serialize, Display)]
+#[derive(Debug, Serialize)]
 pub enum Environment {
     /// Sandbox app Environment
-    #[strum(serialize = "https://sandbox.safaricom.co.ke")]
     Sandbox,
     /// Production app Environment
-    #[strum(serialize = "https://api.safaricom.co.ke")]
     Production,
 }
 
@@ -31,6 +28,33 @@ pub enum Environment {
 pub enum MpesaErrors {
     #[error("Invaid authentication")]
     BadCredentials,
+}
+/// Mpesa CoommandId to make request on either CustomerPayBillOnline or CustomerBuyGoodsOnline
+#[derive(Debug)]
+pub enum CommandID {
+    CustomerBuyGoodsOnline,
+    CustomerPayBillOnline,
+}
+
+impl Display for CommandID {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Environment {
+    fn environemnt(self) -> String {
+        match self {
+            Environment::Sandbox => "https://sandbox.safaricom.co.ke".to_string(),
+            Environment::Production => "https://api.safaricom.co.ke".to_string(),
+        }
+    }
 }
 
 ///Mpesa Client receives th accesstoken response and production_env
@@ -50,7 +74,7 @@ impl Mpesa {
         Mpesa {
             consumerkey: key,
             consumersecret: secret,
-            production_env: env,
+            production_env: env.environemnt(),
         }
     }
     /// Returns a token to be used to authenticate a safaricom app
@@ -70,7 +94,7 @@ impl Mpesa {
         //self.access_token = Some(accesstoken.access_token);
         if resp.status().is_success() {
             let mut accesstoken = resp.json::<MpesaClient>().await?;
-            accesstoken.env = self.production_env.to_string();
+            accesstoken.env = self.production_env;
             accesstoken.client = client;
             Ok(accesstoken)
         } else {
