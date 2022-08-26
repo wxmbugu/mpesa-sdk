@@ -1,6 +1,5 @@
 //! Mpesa sdk is library for making api requests to safaricom Mpesa. it acts as wrappper for mpesa
 
-// TODO: Write test
 // TODO: Error Handling
 // FIX: C2B implementation result
 // NOTE: Enable cfg feature

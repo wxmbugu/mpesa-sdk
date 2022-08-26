@@ -41,7 +41,7 @@ struct RegisterUrls {
     #[serde(rename = "ValidationURL")]
     validationurl: String,
 }
-#[derive(serde::Deserialize, Debug)]
+#[derive(serde::Deserialize, Debug, PartialEq)]
 pub struct Registerurlrespone {
     #[serde(rename(deserialize = "ResponseCode"))]
     pub responsecode: String,

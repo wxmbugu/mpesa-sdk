@@ -55,12 +55,6 @@ pub struct C2Bresponse {
     pub responsedescription: String,
 }
 impl C2BBuild {
-    // add code here
-
-    //     commandid: String,
-    //     amount: i32,
-    //     phonnumber: i64,
-    //     paybill: String
     pub fn new(client: MpesaClient) -> C2BBuild {
         C2BBuild {
             commandid: None,
@@ -73,7 +67,7 @@ impl C2BBuild {
     }
     ///  Sets CommandID either : CustomerPayBillOnline or CustomerBuyGoodsOnline
     /// This is a unique identifier of the transaction type: There are two types of these Identifiers:CustomerPayBillOnline: This is used for Pay Bills
-    ///shortcodes.CustomerBuyGoodsOnline: This is used for Buy Goods shortcodes.
+    /// shortcodes.CustomerBuyGoodsOnline: This is used for Buy Goods shortcodes.
     pub fn commandid(&mut self, commandid: CommandID) -> &mut Self {
         self.commandid = Some(commandid.to_string());
         self

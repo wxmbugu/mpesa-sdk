@@ -13,7 +13,7 @@ pub struct Mpesa {
     consumerkey: String,
     consumersecret: String,
     /*  pub client: Client, */
-    production_env: String,
+    production_env: Environment,
 }
 ///  Production Environment
 #[derive(Debug, Serialize)]
@@ -49,7 +49,7 @@ impl Display for Environment {
 }
 
 impl Environment {
-    fn environemnt(self) -> String {
+    fn environemnt(&mut self) -> String {
         match self {
             Environment::Sandbox => "https://sandbox.safaricom.co.ke".to_string(),
             Environment::Production => "https://api.safaricom.co.ke".to_string(),
@@ -74,18 +74,18 @@ impl Mpesa {
         Mpesa {
             consumerkey: key,
             consumersecret: secret,
-            production_env: env.environemnt(),
+            production_env: env,
         }
     }
     /// Returns a token to be used to authenticate a safaricom app
     /// Sandbox app or Production app
     /// Sets a basic_auth to get access_token
-    pub async fn get_access_token(self) -> Result<MpesaClient, Box<dyn Error>> {
+    pub async fn get_access_token(&mut self) -> Result<MpesaClient, Box<dyn Error>> {
         let client = reqwest::Client::new();
         let resp = client
             .get(format!(
                 "{}/oauth/v1/generate?grant_type=client_credentials",
-                self.production_env
+                self.production_env.environemnt()
             ))
             .basic_auth(&self.consumerkey, Some(&self.consumersecret))
             .send()
@@ -94,7 +94,7 @@ impl Mpesa {
         //self.access_token = Some(accesstoken.access_token);
         if resp.status().is_success() {
             let mut accesstoken = resp.json::<MpesaClient>().await?;
-            accesstoken.env = self.production_env;
+            accesstoken.env = self.production_env.environemnt();
             accesstoken.client = client;
             Ok(accesstoken)
         } else {
