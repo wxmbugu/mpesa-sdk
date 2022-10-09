@@ -29,6 +29,7 @@ pub enum MpesaErrors {
     #[error("Invaid authentication")]
     BadCredentials,
 }
+
 /// Mpesa CoommandId to make request on either CustomerPayBillOnline or CustomerBuyGoodsOnline
 #[derive(Debug)]
 pub enum CommandID {

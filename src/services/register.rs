@@ -80,7 +80,7 @@ impl RegisterUrlsBuilder {
         self.validationurl = Some(validationurl);
         self
     }
-    /// Thie is sets URL that receives the confirmation request from API upon payment completion
+    /// This is sets URL that receives the confirmation request from API upon payment completion
 
     pub fn confirmationurl(&mut self, confirmationurl: String) -> &mut Self {
         self.confirmationurl = Some(confirmationurl);
@@ -106,7 +106,7 @@ impl RegisterUrlsBuilder {
                 .to_string(),
         };
 
-        let resp = self
+        let  resp = self
             .mpesa
             .client
             .post(format!("{}/mpesa/c2b/v1/registerurl", self.mpesa.env))

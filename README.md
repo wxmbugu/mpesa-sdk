@@ -3,12 +3,12 @@
 ### Road Map
 - [X] Accesstoken
 - [X] C2B (client to business)
-- [X] C2Bv2
+- [ ] C2Bv2
 - [ ] B2C (business to client)
-- [ ] B2B (business to business)
+- [ ] B2b (business to business)
 - [ ] TransactionStatus
-- [X] C2B(Register Urls Api)
-- [X] Lipa na Mpesa
+- [x] C2B(Register Urls Api)
+- [ ] Lipa na Mpesa
 - [ ] Dynamic Mpesa QR API
 - [ ] Bill Manager Generic API
 - [ ] Tests

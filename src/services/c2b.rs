@@ -142,8 +142,7 @@ impl C2BBuild {
             .json(&c2b)
             .send()
             .await?;
-        //println!("{:#?}", resp);
-        match resp.status().as_str() {
+               match resp.status().as_str() {
             "200" => return Ok(resp.json::<C2Bresponse>().await?),
             _ => Err(Box::new(BadCredentials)),
         }

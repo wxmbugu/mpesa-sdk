@@ -26,8 +26,8 @@ async fn register() {
     let c2bregister = RegisterUrlsBuilder::new(mpesa)
         .validationurl("https://someurl.com".to_string())
         .confirmationurl("https://anotherurl.com".to_string())
-        .shortcode(600992)
-        .responsetype("okkkk".to_string())
+        .shortcode(600610)
+        .responsetype("Cancelled".to_string())
         .register()
         .await
         .expect("Error");
@@ -36,22 +36,34 @@ async fn register() {
 }
 
 #[tokio::test]
-#[ignore = "test keeps on failing find some test data maybe"]
+//#[ignore = "test keeps on failing, find some test data."]
 async fn lipanampesa() {
-    let mpesa = mpesa().await;
-    let c2bregister = LipanaMpesaBuilder::new(mpesa)
-        .phone_number("254728519199".to_string())
-        .transcationtype("sm".to_string())
-        .businessshortcode(123)
-        .party_a("254718778852".to_string())
-        .party_b(2435)
-        .password("12323434".to_string())
-        .amount(2)
+    let mpesa = Mpesa::new(
+        "nmOLCEGwFYRBDZ9kOXmZOheQnU0jvBGB".to_string(),
+        "YyNPLB5Si7JzrOVm".to_string(),
+        mpesa_sdk::Environment::Sandbox,
+    )
+    .get_access_token()
+    .await
+    .unwrap();
+    let lipanampesa = LipanaMpesaBuilder::new(mpesa)
+        .phone_number(254708374149)
+        .transcationtype(CommandID::CustomerPayBillOnline.to_string())
+        .businessshortcode(174379)
+        .party_a(254708374149)
+        .party_b(174379)
+        .password("bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919".to_string())
+        .amount(1)
+        .callbackurl("https://mydomain.com/pat".to_string())
+        .accountreference("Test".to_string())
+        .transactiondesc("Test".to_string())
         .stkpush()
         .await
         .expect("Error");
-
-    assert_eq!("Success", c2bregister.responsedescription);
+    assert_eq!(
+        "Success. Request accepted for processing",
+        lipanampesa.responsedescription
+    );
 }
 
 #[tokio::test]
